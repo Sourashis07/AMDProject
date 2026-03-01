@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: agentic_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: agentic_ai
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - agentic_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: .
+    container_name: agentic_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DATABASE_URL=mysql+pymysql://root:password@mysql:3306/agentic_ai
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+    volumes:
+      - ./uploads:/app/uploads
+      - ./chroma_db:/app/chroma_db
+      - ./logs:/app/logs
+      - ./firebase-credentials.json:/app/firebase-credentials.json
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - agentic_network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  mysql_data:
+
+networks:
+  agentic_network:
+    driver: bridge
