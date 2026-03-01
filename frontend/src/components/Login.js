@@ -18,6 +18,8 @@ function Login({ onLogin }) {
 
     try {
       let userCredential;
+      const isAdmin = email === 'admin@agenticai.com' && password === 'admin@123';
+      
       if (isSignUp) {
         userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const token = await userCredential.user.getIdToken();
@@ -26,7 +28,7 @@ function Login({ onLogin }) {
         await authAPI.register({
           firebase_uid: userCredential.user.uid,
           email: email,
-          role: 'employee',
+          role: isAdmin ? 'admin' : 'employee',
           organization_id: orgId
         });
       } else {
@@ -45,7 +47,7 @@ function Login({ onLogin }) {
   return (
     <div style={styles.container}>
           <div style={styles.card}>
-            <h1 style={styles.title}>Agentic AI System</h1>
+            <h1 style={styles.title}>OrgCopilot</h1>
             <p style={styles.subtitle}>Local Enterprise AI Platform</p>
             
             <form onSubmit={handleSubmit} style={styles.form}>

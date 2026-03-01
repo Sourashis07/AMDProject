@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config.database import init_db
 from app.config.settings import get_settings
-from app.api import auth, documents, query, logs
+from app.api import auth, documents, query, logs, admin
 from app.utils.logger import get_logger
 import uvicorn
 
@@ -29,6 +29,7 @@ app.include_router(auth.router)
 app.include_router(documents.router)
 app.include_router(query.router)
 app.include_router(logs.router)
+app.include_router(admin.router)
 
 @app.on_event("startup")
 async def startup_event():

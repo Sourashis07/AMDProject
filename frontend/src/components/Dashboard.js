@@ -16,16 +16,34 @@ function Dashboard() {
 
   useEffect(() => {
     setUser(auth.currentUser);
-    loadDocuments();
-    loadQueryHistory();
+    if (auth.currentUser) {
+      loadDocuments();
+      loadQueryHistory();
+    }
   }, []);
+
+  useEffect(() => {
+    // Refresh documents when tab changes
+    if (activeTab === 'upload' || activeTab === 'chat') {
+      loadDocuments();
+    }
+  }, [activeTab]);
 
   const loadDocuments = async () => {
     try {
       const res = await documentsAPI.list();
       setDocuments(res.data);
     } catch (err) {
-      console.error(err);
+      console.error('Error loading documents:', err);
+      // Retry once if token might be stale
+      if (err.response?.status === 401) {
+        const token = await auth.currentUser?.getIdToken(true);
+        if (token) {
+          localStorage.setItem('token', token);
+          const res = await documentsAPI.list();
+          setDocuments(res.data);
+        }
+      }
     }
   };
 
@@ -65,7 +83,8 @@ function Dashboard() {
   };
 
   const handleViewDocument = (doc) => {
-    window.open(`http://localhost:8000/documents/view/${doc.id}`, '_blank');
+    const token = localStorage.getItem('token');
+    window.open(`http://localhost:8000/documents/view/${doc.id}?token=${token}`, '_blank');
   };
 
   const handleDeleteDocument = async (docId) => {
@@ -94,7 +113,7 @@ function Dashboard() {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <h1 style={styles.headerTitle}>Agentic AI Dashboard</h1>
+        <h1 style={styles.headerTitle}>OrgCopilot - Dashboard</h1>
         
         <div style={styles.tabs}>
           <button
@@ -170,15 +189,13 @@ function Dashboard() {
                   </div>
                   <div style={styles.docActions}>
                     {doc.status === 'completed' && (
-                      <>
-                        <button onClick={() => handleViewDocument(doc)} style={styles.viewBtn}>
-                          View
-                        </button>
-                        <button onClick={() => handleAskClick(doc)} style={styles.askBtn}>
-                          Ask
-                        </button>
-                      </>
+                      <button onClick={() => handleAskClick(doc)} style={styles.askBtn}>
+                        Ask
+                      </button>
                     )}
+                    <button onClick={() => handleViewDocument(doc)} style={styles.viewBtn}>
+                      View
+                    </button>
                     <button onClick={() => handleDeleteDocument(doc.id)} style={styles.deleteBtn}>
                       Delete
                     </button>
@@ -202,9 +219,6 @@ function Dashboard() {
                     <p style={styles.docMeta}>Chunks: {doc.chunk_count}</p>
                   </div>
                   <div style={styles.docActions}>
-                    <button onClick={() => handleViewDocument(doc)} style={styles.viewBtn}>
-                      View
-                    </button>
                     <button onClick={() => handleAskClick(doc)} style={styles.askBtn}>
                       Open Chat
                     </button>

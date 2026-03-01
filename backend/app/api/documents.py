@@ -173,11 +173,15 @@ async def delete_document(
 @router.get("/view/{document_id}")
 async def view_document(
     document_id: int,
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    token: str,
     db: Session = Depends(get_db)
 ):
     """View document file"""
     from fastapi.responses import FileResponse
+    from fastapi.security import HTTPAuthorizationCredentials
+    
+    # Create credentials from token
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
     token_data = await get_current_user(None, credentials)
     user = db.query(User).filter(User.firebase_uid == token_data["uid"]).first()
     

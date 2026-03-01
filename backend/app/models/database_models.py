@@ -16,6 +16,7 @@ class User(Base):
     email = Column(String(255), unique=True, nullable=False, index=True)
     role = Column(Enum(UserRole), default=UserRole.EMPLOYEE)
     organization_id = Column(String(64), nullable=False, index=True)
+    last_ip = Column(String(45), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
